@@ -1,0 +1,24 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 50px;
+  text-align: center;
+  background: #f0f8ff;
+}
+form {
+  margin-bottom: 20px;
+}
+input, button {
+  padding: 10px;
+  margin: 5px;
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
+  margin: 5px 0;
+}
+a {
+  text-decoration: none;
+  color: #007bff;
+}
