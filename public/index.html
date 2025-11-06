@@ -2,60 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>☁️ Cloud File Storage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud File Storage</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>☁️ Cloud File Storage</h1>
-      <button id="logoutBtn">Logout</button>
-    </header>
+    <h2>☁️ Cloud File Storage Dashboard</h2>
+    <button id="logoutBtn" style="float:right">Logout</button>
 
-    <!-- Upload Section -->
-    <section class="upload-section">
-      <form id="uploadForm">
-        <label for="fileInput" class="file-label">Select a file to upload</label>
-        <input type="file" id="fileInput" required />
-        <button type="submit" class="btn-upload">📤 Upload File</button>
-      </form>
-    </section>
+    <!-- Upload Form -->
+    <form id="uploadForm">
+      <input type="file" id="fileInput" required />
+      <button type="submit">📤 Upload</button>
+    </form>
 
-    <!-- Search -->
-    <section class="search-section">
-      <input type="text" id="searchInput" placeholder="🔍 Search your files..." />
-    </section>
-
-   
-    <!-- Storage -->
-<section class="storage-section">
-  <h3>💾 Storage Usage</h3>
-  <div id="storageUsage">
-    <span id="storageText">0 MB / 500 MB</span>
-    <div class="progress">
-      <div id="storageBar"></div>
+    <!-- Storage Usage -->
+    <div id="storageUsage">
+      Storage Used: <span id="storageText">0 MB / 50 MB</span>
+      <div><div id="storageBar" style="background:#60a5fa; width:0%"></div></div>
     </div>
+
+    <!-- File List -->
+    <h3>📁 Uploaded Files</h3>
+    <div class="file-list" id="fileList"></div>
+
+    <!-- Activity Section -->
+    <h3>🧾 Activity Log</h3>
+    <ul id="activityList"></ul>
   </div>
-</section>
-
-
-    <!-- Files -->
-    <section class="files-section">
-      <h3>📁 Uploaded Files</h3>
-      <div class="file-list" id="fileList"></div>
-    </section>
-
-    <!-- Activity -->
-    <section class="activity-section">
-      <h3>🧾 Activity Log</h3>
-      <ul id="activityList"></ul>
-    </section>
-  </div>
-
-  <footer>
-    <p>Made with 💙 by Harish | Cloud Storage App</p>
-  </footer>
 
   <script src="script.js"></script>
 </body>

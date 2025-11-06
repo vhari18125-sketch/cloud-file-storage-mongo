@@ -1,11 +1,15 @@
-// 🌐 Backend API base URL (auto detects local or Render)
+// 🌐 Backend API base URL
 const API_BASE =
   window.location.hostname.includes("localhost")
     ? "http://localhost:5000/api"
     : "/api";
 
-// ✅ Load user from localStorage (token-based auth)
+// ✅ Token-based auth
 let token = localStorage.getItem("token");
+if (!token) {
+  alert("Please login first!");
+  window.location.href = "login.html";
+}
 
 // 🧭 DOM Elements
 const uploadForm = document.getElementById("uploadForm");
@@ -15,16 +19,14 @@ const activityList = document.getElementById("activityList");
 const searchInput = document.getElementById("searchInput");
 const logoutBtn = document.getElementById("logoutBtn");
 
-// ✅ Handle Logout
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("token");
-    alert("Logged out successfully!");
-    location.reload();
-  });
-}
+// ✅ Logout
+logoutBtn?.addEventListener("click", () => {
+  localStorage.removeItem("token");
+  alert("Logged out successfully!");
+  window.location.href = "login.html";
+});
 
-// ✅ Function: Fetch all files
+// ✅ Fetch files
 async function fetchFiles(searchQuery = "") {
   try {
     const res = await fetch(`${API_BASE}/files`, {
@@ -35,24 +37,23 @@ async function fetchFiles(searchQuery = "") {
     fileList.innerHTML = "";
     let filteredFiles = files;
 
-    // 🔍 Search filter
+    // 🔍 Search
     if (searchQuery) {
       filteredFiles = files.filter((f) =>
         f.originalName.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // 🕓 Sort by recent uploads
+    // 🕓 Sort by recent
     filteredFiles.sort(
       (a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)
     );
 
-    // 🖼️ Display file list
+    // 🖼️ Display files
     filteredFiles.forEach((file) => {
       const item = document.createElement("div");
       item.className = "file-item";
 
-      // Thumbnail preview (if image/pdf)
       let preview = "";
       if (file.mimetype.startsWith("image/")) {
         preview = `<img src="/uploads/${file.filename}" alt="Preview" />`;
@@ -79,7 +80,7 @@ async function fetchFiles(searchQuery = "") {
   }
 }
 
-// ✅ Upload File
+// ✅ Upload file
 uploadForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const file = fileInput.files[0];
@@ -105,13 +106,13 @@ uploadForm?.addEventListener("submit", async (e) => {
   }
 });
 
-// ✅ Download File
+// ✅ Download file
 async function downloadFile(filename) {
   window.open(`/uploads/${filename}`, "_blank");
   addActivity(`⬇️ Downloaded: ${filename}`);
 }
 
-// ✅ Delete File
+// ✅ Delete file
 async function deleteFile(id) {
   if (!confirm("Are you sure you want to delete this file?")) return;
   try {
@@ -128,12 +129,12 @@ async function deleteFile(id) {
   }
 }
 
-// ✅ Search Event
+// ✅ Search files
 searchInput?.addEventListener("input", (e) => {
   fetchFiles(e.target.value);
 });
 
-// ✅ Activity Log (Local only)
+// ✅ Activity log (local only)
 function addActivity(message) {
   const li = document.createElement("li");
   li.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
@@ -143,7 +144,7 @@ function addActivity(message) {
   }
 }
 
-// ✅ Storage Usage Bar
+// ✅ Storage usage
 function updateStorageUsage(files) {
   const totalBytes = files.reduce((acc, f) => acc + (f.size || 0), 0);
   const usedMB = (totalBytes / (1024 * 1024)).toFixed(2);
