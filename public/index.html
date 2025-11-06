@@ -2,27 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Cloud Storage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>☁️ Cloud File Storage</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h2>📁 My Cloud Files</h2>
-    <button id="logoutBtn">Logout</button>
+    <header>
+      <h1>☁️ Cloud File Storage</h1>
+      <button id="logoutBtn">Logout</button>
+    </header>
 
-    <input type="text" id="searchInput" placeholder="🔍 Search files..." />
+    <!-- Upload Section -->
+    <section class="upload-section">
+      <form id="uploadForm">
+        <label for="fileInput" class="file-label">Select a file to upload</label>
+        <input type="file" id="fileInput" required />
+        <button type="submit" class="btn-upload">📤 Upload File</button>
+      </form>
+    </section>
 
-    <form id="uploadForm">
-      <input type="file" id="fileInput" required />
-      <button type="submit">Upload</button>
-    </form>
+    <!-- Search -->
+    <section class="search-section">
+      <input type="text" id="searchInput" placeholder="🔍 Search your files..." />
+    </section>
 
-    <div id="storageUsage"></div>
-    <div id="fileList" class="file-list"></div>
-
-    <h3>📜 Recent Activity</h3>
-    <ul id="activityList"></ul>
+   
+    <!-- Storage -->
+<section class="storage-section">
+  <h3>💾 Storage Usage</h3>
+  <div id="storageUsage">
+    <span id="storageText">0 MB / 500 MB</span>
+    <div class="progress">
+      <div id="storageBar"></div>
+    </div>
   </div>
+</section>
+
+
+    <!-- Files -->
+    <section class="files-section">
+      <h3>📁 Uploaded Files</h3>
+      <div class="file-list" id="fileList"></div>
+    </section>
+
+    <!-- Activity -->
+    <section class="activity-section">
+      <h3>🧾 Activity Log</h3>
+      <ul id="activityList"></ul>
+    </section>
+  </div>
+
+  <footer>
+    <p>Made with 💙 by Harish | Cloud Storage App</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>

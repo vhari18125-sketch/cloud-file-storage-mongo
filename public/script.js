@@ -1,137 +1,160 @@
-const token = localStorage.getItem("token");
-if (!token) window.location.href = "login.html";
+// 🌐 Backend API base URL (auto detects local or Render)
+const API_BASE =
+  window.location.hostname.includes("localhost")
+    ? "http://localhost:5000/api"
+    : "/api";
 
-document.getElementById("logoutBtn").onclick = () => {
-  localStorage.removeItem("token");
-  window.location.href = "login.html";
-};
+// ✅ Load user from localStorage (token-based auth)
+let token = localStorage.getItem("token");
 
-let allFiles = [];
+// 🧭 DOM Elements
+const uploadForm = document.getElementById("uploadForm");
+const fileInput = document.getElementById("fileInput");
+const fileList = document.getElementById("fileList");
+const activityList = document.getElementById("activityList");
+const searchInput = document.getElementById("searchInput");
+const logoutBtn = document.getElementById("logoutBtn");
 
-// Load all files
-async function loadFiles() {
-  const res = await fetch("/api/files", {
-    headers: { Authorization: `Bearer ${token}` },
+// ✅ Handle Logout
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    alert("Logged out successfully!");
+    location.reload();
   });
-  allFiles = await res.json();
-
-  renderFiles(allFiles);
-  showStorageUsage();
-  loadActivity();
 }
 
-// Render files (with preview + search)
-function renderFiles(files) {
-  const list = document.getElementById("fileList");
-  list.innerHTML = "";
+// ✅ Function: Fetch all files
+async function fetchFiles(searchQuery = "") {
+  try {
+    const res = await fetch(`${API_BASE}/files`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const files = await res.json();
 
-  if (files.length === 0) {
-    list.innerHTML = "<p>No files uploaded yet.</p>";
-    return;
+    fileList.innerHTML = "";
+    let filteredFiles = files;
+
+    // 🔍 Search filter
+    if (searchQuery) {
+      filteredFiles = files.filter((f) =>
+        f.originalName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // 🕓 Sort by recent uploads
+    filteredFiles.sort(
+      (a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)
+    );
+
+    // 🖼️ Display file list
+    filteredFiles.forEach((file) => {
+      const item = document.createElement("div");
+      item.className = "file-item";
+
+      // Thumbnail preview (if image/pdf)
+      let preview = "";
+      if (file.mimetype.startsWith("image/")) {
+        preview = `<img src="/uploads/${file.filename}" alt="Preview" />`;
+      } else if (file.mimetype === "application/pdf") {
+        preview = `<embed src="/uploads/${file.filename}" type="application/pdf" />`;
+      } else {
+        preview = `<img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" alt="File" />`;
+      }
+
+      item.innerHTML = `
+        ${preview}
+        <span>${file.originalName}</span>
+        <div>
+          <button onclick="downloadFile('${file.filename}')">⬇️ Download</button>
+          <button onclick="deleteFile('${file._id}')">🗑️ Delete</button>
+        </div>
+      `;
+      fileList.appendChild(item);
+    });
+
+    updateStorageUsage(files);
+  } catch (err) {
+    console.error("Error fetching files:", err);
   }
-
-  files.forEach((file) => {
-    const isImage = /\.(png|jpg|jpeg|gif)$/i.test(file.originalName);
-    const isPDF = /\.pdf$/i.test(file.originalName);
-
-    const div = document.createElement("div");
-    div.classList.add("file-item");
-    div.innerHTML = `
-      ${isImage ? `<img src="/${file.path}" width="60">` : ""}
-      ${isPDF ? `<embed src="/${file.path}" width="80" height="80">` : ""}
-      <span>${file.originalName}</span>
-      <div>
-        <button onclick="downloadFile('${file._id}')">⬇️</button>
-        <button onclick="deleteFile('${file._id}')">🗑️</button>
-      </div>
-    `;
-    list.appendChild(div);
-  });
 }
 
-// Upload
-document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+// ✅ Upload File
+uploadForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
+  const file = fileInput.files[0];
+  if (!file) return alert("Please choose a file to upload!");
+
   const formData = new FormData();
-  formData.append("file", document.getElementById("fileInput").files[0]);
+  formData.append("file", file);
 
-  await fetch("/api/files/upload", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
+  try {
+    const res = await fetch(`${API_BASE}/files/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
 
-  document.getElementById("fileInput").value = "";
-  loadFiles();
+    const data = await res.json();
+    alert(data.message);
+    fileInput.value = "";
+    addActivity(`📤 Uploaded: ${file.name}`);
+    fetchFiles();
+  } catch (err) {
+    console.error("Upload error:", err);
+  }
 });
 
-// Download
-async function downloadFile(id) {
-  const res = await fetch(`/api/files/download/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return alert("Failed to download");
-
-  const blob = await res.blob();
-  const contentDisposition = res.headers.get("content-disposition");
-  const fileName = contentDisposition
-    ? contentDisposition.split("filename=")[1].replace(/"/g, "")
-    : "downloaded_file";
-
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+// ✅ Download File
+async function downloadFile(filename) {
+  window.open(`/uploads/${filename}`, "_blank");
+  addActivity(`⬇️ Downloaded: ${filename}`);
 }
 
-// Delete
+// ✅ Delete File
 async function deleteFile(id) {
-  await fetch(`/api/files/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  loadFiles();
+  if (!confirm("Are you sure you want to delete this file?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/files/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    alert(data.message);
+    addActivity(`🗑️ Deleted file ID: ${id}`);
+    fetchFiles();
+  } catch (err) {
+    console.error("Delete error:", err);
+  }
 }
 
-// Storage bar
-async function showStorageUsage() {
-  const totalUsed = allFiles.reduce((sum, f) => sum + (f.size || 0), 0);
-  const usedMB = (totalUsed / (1024 * 1024)).toFixed(2);
-  const maxMB = 500;
-  const percent = Math.min((usedMB / maxMB) * 100, 100).toFixed(1);
-
-  document.getElementById("storageUsage").innerHTML = `
-    <b>Storage Used:</b> ${usedMB} MB / ${maxMB} MB
-    <div style="background:#ddd;width:250px;border-radius:6px;">
-      <div style="width:${percent}%;background:#4caf50;height:10px;"></div>
-    </div>
-  `;
-}
-
-// Activity
-async function loadActivity() {
-  const res = await fetch("/api/files/activity", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const activities = await res.json();
-  const list = document.getElementById("activityList");
-  list.innerHTML = "";
-  activities.forEach((a) => {
-    const li = document.createElement("li");
-    li.textContent = `${a.action.toUpperCase()} - ${a.fileName} (${new Date(a.timestamp).toLocaleString()})`;
-    list.appendChild(li);
-  });
-}
-
-// Search filter
-document.getElementById("searchInput").addEventListener("input", (e) => {
-  const searchTerm = e.target.value.toLowerCase();
-  const filtered = allFiles.filter((f) =>
-    f.originalName.toLowerCase().includes(searchTerm)
-  );
-  renderFiles(filtered);
+// ✅ Search Event
+searchInput?.addEventListener("input", (e) => {
+  fetchFiles(e.target.value);
 });
 
-loadFiles();
+// ✅ Activity Log (Local only)
+function addActivity(message) {
+  const li = document.createElement("li");
+  li.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+  activityList.prepend(li);
+  if (activityList.children.length > 100) {
+    activityList.removeChild(activityList.lastChild);
+  }
+}
+
+// ✅ Storage Usage Bar
+function updateStorageUsage(files) {
+  const totalBytes = files.reduce((acc, f) => acc + (f.size || 0), 0);
+  const usedMB = (totalBytes / (1024 * 1024)).toFixed(2);
+  const limitMB = 50;
+  const percent = Math.min((usedMB / limitMB) * 100, 100);
+
+  document.getElementById("storageText").textContent = `${usedMB} MB / ${limitMB} MB`;
+  document.getElementById("storageBar").style.width = `${percent}%`;
+  document.getElementById("storageBar").style.background =
+    percent > 90 ? "#ef4444" : "#60a5fa";
+}
+
+// ✅ Initial load
+fetchFiles();
