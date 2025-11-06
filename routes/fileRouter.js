@@ -7,9 +7,13 @@ import path from "path";
 
 const router = express.Router();
 
+// Ensure uploads folder exists
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
 // Multer setup
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
+  destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + "-" + file.originalname);
@@ -17,7 +21,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ✅ Upload file
+// POST /upload - Upload a file
 router.post("/upload", protect, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
@@ -27,67 +31,59 @@ router.post("/upload", protect, upload.single("file"), async (req, res) => {
       originalName: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
-      path: req.file.path,          // ✅ store multer path
-      uploadedBy: req.user.id,      // ✅ associate with user
+      uploadedBy: req.user.id,
     });
 
     await file.save();
-    res.json({ message: "File uploaded successfully!" });
+    res.json({ message: "File uploaded successfully!", file });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "File upload failed", error: err.message });
+    res.status(500).json({ message: "Server error during file upload" });
   }
 });
 
-
-// ✅ Get all files (user sees own files, admin sees all)
+// GET / - List all files (admin sees all, user sees own)
 router.get("/", protect, async (req, res) => {
   try {
     const query = req.user.role === "admin" ? {} : { uploadedBy: req.user.id };
-    const files = await File.find(query).sort({ createdAt: -1 });
+    const files = await File.find(query).populate("uploadedBy", "email role");
     res.json(files);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to fetch files", error: err.message });
+    res.status(500).json({ message: "Server error fetching files" });
   }
 });
 
-// ✅ Download file
+// GET /download/:id - Download a file
 router.get("/download/:id", protect, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "File not found" });
 
-    // Only uploader or admin can download
-    if (req.user.role !== "admin" && file.uploadedBy.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    const filePath = path.resolve("uploads", file.filename);
-    res.download(filePath, file.originalName);
+    res.download(path.join(uploadDir, file.filename), file.originalName);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Download failed", error: err.message });
+    res.status(500).json({ message: "Error downloading file" });
   }
 });
 
-// ✅ Delete file
+// DELETE /:id - Delete a file
 router.delete("/:id", protect, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "File not found" });
 
-    // Only uploader or admin can delete
     if (req.user.role !== "admin" && file.uploadedBy.toString() !== req.user.id) {
       return res.status(403).json({ message: "You cannot delete this file" });
     }
 
-    fs.unlinkSync(path.resolve("uploads", file.filename));
+    fs.unlinkSync(path.join(uploadDir, file.filename));
     await File.findByIdAndDelete(req.params.id);
+
     res.json({ message: "File deleted successfully!" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Delete failed", error: err.message });
+    res.status(500).json({ message: "Error deleting file" });
   }
 });
 
