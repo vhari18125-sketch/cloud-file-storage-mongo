@@ -16,7 +16,6 @@ const activityList = document.getElementById("activityList");
 const logoutBtn = document.getElementById("logoutBtn");
 const storageText = document.getElementById("storageText");
 const storageBar = document.getElementById("storageBar");
-const searchInput = document.getElementById("searchInput");
 
 // ✅ Logout
 logoutBtn?.addEventListener("click", () => {
@@ -72,7 +71,7 @@ async function loadFiles(searchQuery = "") {
       if (file.mimetype?.startsWith("image/")) {
         preview = `<img src="/uploads/${file.filename}" alt="Preview" />`;
       } else if (file.mimetype === "application/pdf") {
-        preview = `<embed src="/uploads/${file.filename}" type="application/pdf" />`;
+        preview = `<embed src="/uploads/${file.filename}" type="application/pdf" width="100%" height="100px"/>`;
       } else {
         preview = `<img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" alt="File" />`;
       }
@@ -91,7 +90,6 @@ async function loadFiles(searchQuery = "") {
     updateStorageUsage(files);
   } catch (err) {
     console.error("Error fetching files:", err);
-    alert("Failed to load files. Please try again.");
   }
 }
 
@@ -107,17 +105,23 @@ uploadForm?.addEventListener("submit", async (e) => {
   try {
     const res = await fetch(`${API_BASE}/files/upload`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData, // Important: do NOT set Content-Type manually
+      headers: { Authorization: `Bearer ${token}` }, // Do NOT set content-type manually
+      body: formData,
     });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Upload failed");
+    }
+
     const data = await res.json();
-    alert(data.message);
+    alert(data.message || "File uploaded successfully");
     fileInput.value = "";
     addActivity(`📤 Uploaded: ${file.name}`);
     loadFiles();
   } catch (err) {
     console.error("Upload error:", err);
-    alert("Upload failed. Try again.");
+    alert("Upload failed: " + err.message);
   }
 });
 
@@ -141,11 +145,12 @@ async function deleteFile(id) {
     loadFiles();
   } catch (err) {
     console.error("Delete error:", err);
-    alert("Delete failed. Try again.");
+    alert("Delete failed");
   }
 }
 
-// ✅ Search input
+// ✅ Search input (optional)
+const searchInput = document.getElementById("searchInput");
 searchInput?.addEventListener("input", (e) => loadFiles(e.target.value));
 
 // ✅ Initial load
