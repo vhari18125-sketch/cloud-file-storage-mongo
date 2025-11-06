@@ -30,8 +30,40 @@ async function loadFiles() {
 }
 
 async function downloadFile(id) {
-  window.open(`/api/files/download/${id}?token=${token}`, "_blank");
+  try {
+    const response = await fetch(`/api/files/download/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to download file");
+    }
+
+    // Get the file name from response headers (if available)
+    const contentDisposition = response.headers.get("content-disposition");
+    const fileName = contentDisposition
+      ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+      : "downloaded_file";
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
 }
+  
+
 
 async function deleteFile(id) {
   if (!confirm("Delete this file?")) return;
