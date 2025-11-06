@@ -16,6 +16,7 @@ const activityList = document.getElementById("activityList");
 const logoutBtn = document.getElementById("logoutBtn");
 const storageText = document.getElementById("storageText");
 const storageBar = document.getElementById("storageBar");
+const searchInput = document.getElementById("searchInput");
 
 // ✅ Logout
 logoutBtn?.addEventListener("click", () => {
@@ -90,6 +91,7 @@ async function loadFiles(searchQuery = "") {
     updateStorageUsage(files);
   } catch (err) {
     console.error("Error fetching files:", err);
+    alert("Failed to load files. Please try again.");
   }
 }
 
@@ -106,7 +108,7 @@ uploadForm?.addEventListener("submit", async (e) => {
     const res = await fetch(`${API_BASE}/files/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: formData, // Do NOT set content-type manually
+      body: formData, // Important: do NOT set Content-Type manually
     });
     const data = await res.json();
     alert(data.message);
@@ -115,7 +117,7 @@ uploadForm?.addEventListener("submit", async (e) => {
     loadFiles();
   } catch (err) {
     console.error("Upload error:", err);
-    alert("Upload failed");
+    alert("Upload failed. Try again.");
   }
 });
 
@@ -139,11 +141,11 @@ async function deleteFile(id) {
     loadFiles();
   } catch (err) {
     console.error("Delete error:", err);
+    alert("Delete failed. Try again.");
   }
 }
 
-// ✅ Search input (optional)
-const searchInput = document.getElementById("searchInput");
+// ✅ Search input
 searchInput?.addEventListener("input", (e) => loadFiles(e.target.value));
 
 // ✅ Initial load
