@@ -1,116 +1,84 @@
 import express from "express";
 import multer from "multer";
-import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import fs from "fs";
 import File from "../models/File.js";
-import Activity from "../models/Activity.js"; // ✅ Import Activity model
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// 🗂️ Directory setup for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Create uploads folder if missing
+const uploadDir = "uploads";
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// 📦 Multer storage setup
+// Multer setup
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../uploads");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath);
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
-
 const upload = multer({ storage });
 
-// 🟢 Upload file
-router.post("/upload", upload.single("file"), async (req, res) => {
+
+// 📁 Upload a file
+router.post("/upload", authMiddleware, upload.single("file"), async (req, res) => {
   try {
-    const file = new File({
-      fileName: req.file.originalname,
-      filePath: req.file.path,
-      fileSize: req.file.size,
+    const newFile = new File({
+      user: req.user.id,
+      originalName: req.file.originalname,
+      filename: req.file.filename
     });
-
-    await file.save();
-
-    // ✅ Log upload activity
-    await Activity.create({
-      fileName: req.file.originalname,
-      action: "upload",
-    });
-
-    res.status(200).json({ message: "File uploaded successfully", file });
-  } catch (error) {
-    res.status(500).json({ message: "Error uploading file", error: error.message });
+    await newFile.save();
+    res.json({ message: "File uploaded successfully", file: newFile });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
   }
 });
 
-// 🔵 Get all files
-router.get("/", async (req, res) => {
+
+// 📄 Get all user files
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const files = await File.find().sort({ uploadedAt: -1 });
+    const files = await File.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(files);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Failed to fetch files" });
   }
 });
 
-// 🟣 Download file
-router.get("/download/:id", async (req, res) => {
+
+// ⬇️ Download a file
+router.get("/download/:id", authMiddleware, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "File not found" });
+    if (file.user.toString() !== req.user.id)
+      return res.status(403).json({ message: "Access denied" });
 
-    const filePath = path.resolve(file.filePath);
-    if (!fs.existsSync(filePath))
-      return res.status(404).json({ message: "File not found on server" });
-
-    // ✅ Log download activity
-    await Activity.create({
-      fileName: file.fileName,
-      action: "download",
-    });
-
-    res.download(filePath, file.fileName);
+    const filePath = path.resolve("uploads", file.filename);
+    res.download(filePath, file.originalName);
   } catch (err) {
-    res.status(500).json({ message: "Error downloading file", error: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Failed to download file" });
   }
 });
 
-// 🔴 Delete file
-router.delete("/:id", async (req, res) => {
+
+// 🗑️ Delete a file
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "File not found" });
+    if (file.user.toString() !== req.user.id)
+      return res.status(403).json({ message: "Access denied" });
 
-    fs.unlinkSync(file.filePath);
+    const filePath = path.resolve("uploads", file.filename);
+    fs.unlinkSync(filePath);
     await file.deleteOne();
-
-    // ✅ Log delete activity
-    await Activity.create({
-      fileName: file.fileName,
-      action: "delete",
-    });
-
     res.json({ message: "File deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Error deleting file", error: err.message });
-  }
-});
-
-// 🧾 Fetch recent activity logs
-router.get("/activity/logs", async (req, res) => {
-  try {
-    const logs = await Activity.find().sort({ timestamp: -1 }).limit(20);
-    res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching activity logs", error: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete file" });
   }
 });
 

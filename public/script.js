@@ -1,161 +1,95 @@
-// 🌐 Backend API base URL
-const API_BASE =
-  window.location.hostname.includes("localhost")
-    ? "http://localhost:5000/api"
-    : "/api";
+const token = localStorage.getItem("token");
+if (!token) window.location.href = "login.html";
 
-// ✅ Token-based auth
-let token = localStorage.getItem("token");
-if (!token) {
-  alert("Please login first!");
-  window.location.href = "login.html";
-}
-
-// 🧭 DOM Elements
-const uploadForm = document.getElementById("uploadForm");
-const fileInput = document.getElementById("fileInput");
-const fileList = document.getElementById("fileList");
-const activityList = document.getElementById("activityList");
-const searchInput = document.getElementById("searchInput");
-const logoutBtn = document.getElementById("logoutBtn");
-
-// ✅ Logout
-logoutBtn?.addEventListener("click", () => {
+document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("token");
-  alert("Logged out successfully!");
   window.location.href = "login.html";
-});
+};
 
-// ✅ Fetch files
-async function fetchFiles(searchQuery = "") {
+// Fetch all files
+async function loadFiles() {
+  const res = await fetch("/api/files", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const files = await res.json();
+
+  const list = document.getElementById("fileList");
+  list.innerHTML = "";
+
+  if (files.length === 0) {
+    list.innerHTML = "<p>No files uploaded yet.</p>";
+    return;
+  }
+
+  files.forEach((file) => {
+    const div = document.createElement("div");
+    div.className = "file-item";
+    div.innerHTML = `
+      <span>${file.originalName}</span>
+      <div>
+        <button class="download" onclick="downloadFile('${file._id}')">⬇️</button>
+        <button class="delete" onclick="deleteFile('${file._id}')">🗑️</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// Download a file
+async function downloadFile(id) {
   try {
-    const res = await fetch(`${API_BASE}/files`, {
+    const res = await fetch(`/api/files/download/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const files = await res.json();
 
-    fileList.innerHTML = "";
-    let filteredFiles = files;
+    if (!res.ok) throw new Error("Failed to download file");
 
-    // 🔍 Search
-    if (searchQuery) {
-      filteredFiles = files.filter((f) =>
-        f.originalName.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    const contentDisposition = res.headers.get("content-disposition");
+    const fileName = contentDisposition
+      ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+      : "downloaded_file";
 
-    // 🕓 Sort by recent
-    filteredFiles.sort(
-      (a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)
-    );
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
 
-    // 🖼️ Display files
-    filteredFiles.forEach((file) => {
-      const item = document.createElement("div");
-      item.className = "file-item";
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
 
-      let preview = "";
-      if (file.mimetype.startsWith("image/")) {
-        preview = `<img src="/uploads/${file.filename}" alt="Preview" />`;
-      } else if (file.mimetype === "application/pdf") {
-        preview = `<embed src="/uploads/${file.filename}" type="application/pdf" />`;
-      } else {
-        preview = `<img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" alt="File" />`;
-      }
-
-      item.innerHTML = `
-        ${preview}
-        <span>${file.originalName}</span>
-        <div>
-          <button onclick="downloadFile('${file.filename}')">⬇️ Download</button>
-          <button onclick="deleteFile('${file._id}')">🗑️ Delete</button>
-        </div>
-      `;
-      fileList.appendChild(item);
-    });
-
-    updateStorageUsage(files);
+    a.remove();
+    window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error("Error fetching files:", err);
+    alert("Error: " + err.message);
   }
 }
 
-// ✅ Upload file
-uploadForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const file = fileInput.files[0];
-  if (!file) return alert("Please choose a file to upload!");
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const res = await fetch(`${API_BASE}/files/upload`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-
-    const data = await res.json();
-    alert(data.message);
-    fileInput.value = "";
-    addActivity(`📤 Uploaded: ${file.name}`);
-    fetchFiles();
-  } catch (err) {
-    console.error("Upload error:", err);
-  }
-});
-
-// ✅ Download file
-async function downloadFile(filename) {
-  window.open(`/uploads/${filename}`, "_blank");
-  addActivity(`⬇️ Downloaded: ${filename}`);
-}
-
-// ✅ Delete file
+// Delete a file
 async function deleteFile(id) {
-  if (!confirm("Are you sure you want to delete this file?")) return;
-  try {
-    const res = await fetch(`${API_BASE}/files/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    alert(data.message);
-    addActivity(`🗑️ Deleted file ID: ${id}`);
-    fetchFiles();
-  } catch (err) {
-    console.error("Delete error:", err);
-  }
+  if (!confirm("Delete this file?")) return;
+  await fetch(`/api/files/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  loadFiles();
 }
 
-// ✅ Search files
-searchInput?.addEventListener("input", (e) => {
-  fetchFiles(e.target.value);
+// Upload file
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const formData = new FormData();
+  formData.append("file", document.getElementById("fileInput").files[0]);
+
+  await fetch("/api/files/upload", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  document.getElementById("fileInput").value = ""; // clear input
+  loadFiles(); // refresh list
 });
 
-// ✅ Activity log (local only)
-function addActivity(message) {
-  const li = document.createElement("li");
-  li.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
-  activityList.prepend(li);
-  if (activityList.children.length > 100) {
-    activityList.removeChild(activityList.lastChild);
-  }
-}
-
-// ✅ Storage usage
-function updateStorageUsage(files) {
-  const totalBytes = files.reduce((acc, f) => acc + (f.size || 0), 0);
-  const usedMB = (totalBytes / (1024 * 1024)).toFixed(2);
-  const limitMB = 50;
-  const percent = Math.min((usedMB / limitMB) * 100, 100);
-
-  document.getElementById("storageText").textContent = `${usedMB} MB / ${limitMB} MB`;
-  document.getElementById("storageBar").style.width = `${percent}%`;
-  document.getElementById("storageBar").style.background =
-    percent > 90 ? "#ef4444" : "#60a5fa";
-}
-
-// ✅ Initial load
-fetchFiles();
+// Initial load
+loadFiles();

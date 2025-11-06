@@ -1,37 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloud File Storage</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
 <body>
   <div class="container">
-    <h2>☁️ Cloud File Storage Dashboard</h2>
-    <button id="logoutBtn" style="float:right">Logout</button>
+    <h2>☁️ My Cloud Storage</h2>
+    <button id="logoutBtn">Logout</button>
 
-    <!-- Upload Form -->
     <form id="uploadForm">
       <input type="file" id="fileInput" required />
-      <button type="submit">📤 Upload</button>
+      <button type="submit">Upload</button>
     </form>
 
-    <!-- Storage Usage -->
-    <div id="storageUsage">
-      Storage Used: <span id="storageText">0 MB / 50 MB</span>
-      <div><div id="storageBar" style="background:#60a5fa; width:0%"></div></div>
-    </div>
-
-    <!-- File List -->
-    <h3>📁 Uploaded Files</h3>
-    <div class="file-list" id="fileList"></div>
-
-    <!-- Activity Section -->
-    <h3>🧾 Activity Log</h3>
-    <ul id="activityList"></ul>
+    <div id="fileList" class="file-list"></div>
   </div>
 
   <script src="script.js"></script>
 </body>
-</html>
