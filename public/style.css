@@ -1,24 +1,76 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 50px;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   text-align: center;
-  background: #f0f8ff;
+  width: 350px;
+  backdrop-filter: blur(10px);
 }
-form {
-  margin-bottom: 20px;
-}
+
 input, button {
+  width: 100%;
   padding: 10px;
-  margin: 5px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  outline: none;
 }
-ul {
-  list-style: none;
-  padding: 0;
+
+input {
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
 }
-li {
-  margin: 5px 0;
+
+button {
+  background: #00c6ff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
 }
+
+button:hover {
+  background: #0072ff;
+  transform: scale(1.05);
+}
+
 a {
+  color: #fff;
   text-decoration: none;
-  color: #007bff;
+  display: block;
+  margin-top: 10px;
+  opacity: 0.8;
+}
+a:hover {
+  opacity: 1;
+}
+
+.file-item {
+  background: rgba(255, 255, 255, 0.2);
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-item button {
+  margin-left: 10px;
+  background: #ff7675;
+}
+.file-item button.download {
+  background: #55efc4;
 }

@@ -1,7 +1,7 @@
 {
   "name": "cloud-file-storage-mongo",
   "version": "1.0.0",
-  "description": "Simple cloud-based file storage using MongoDB Atlas and Node.js.",
+  "description": "Advanced cloud-based file storage with authentication, roles, and MongoDB Atlas.",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -9,11 +9,13 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "mongoose": "^8.3.0",
-    "dotenv": "^16.4.5",
-    "multer": "^1.4.5-lts.1",
-    "cors": "^2.8.5"
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.3",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
