@@ -25,18 +25,20 @@ router.post("/upload", protect, upload.single("file"), async (req, res) => {
     const file = new File({
       filename: req.file.filename,
       originalName: req.file.originalname,
-      size: req.file.size,
       mimetype: req.file.mimetype,
-      uploadedBy: req.user.id,
+      size: req.file.size,
+      path: req.file.path,          // ✅ store multer path
+      uploadedBy: req.user.id,      // ✅ associate with user
     });
 
     await file.save();
     res.json({ message: "File uploaded successfully!" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Upload failed", error: err.message });
+    res.status(500).json({ message: "File upload failed", error: err.message });
   }
 });
+
 
 // ✅ Get all files (user sees own files, admin sees all)
 router.get("/", protect, async (req, res) => {
