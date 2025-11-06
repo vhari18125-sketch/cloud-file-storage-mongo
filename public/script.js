@@ -6,21 +6,15 @@ document.getElementById("logoutBtn").onclick = () => {
   window.location.href = "login.html";
 };
 
-// Fetch all files
+// Fetch files
 async function loadFiles() {
   const res = await fetch("/api/files", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}` }
   });
   const files = await res.json();
 
   const list = document.getElementById("fileList");
   list.innerHTML = "";
-
-  if (files.length === 0) {
-    list.innerHTML = "<p>No files uploaded yet.</p>";
-    return;
-  }
-
   files.forEach((file) => {
     const div = document.createElement("div");
     div.className = "file-item";
@@ -28,44 +22,17 @@ async function loadFiles() {
       <span>${file.originalName}</span>
       <div>
         <button class="download" onclick="downloadFile('${file._id}')">⬇️</button>
-        <button class="delete" onclick="deleteFile('${file._id}')">🗑️</button>
+        <button onclick="deleteFile('${file._id}')">🗑️</button>
       </div>
     `;
     list.appendChild(div);
   });
 }
 
-// Download a file
 async function downloadFile(id) {
-  try {
-    const res = await fetch(`/api/files/download/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) throw new Error("Failed to download file");
-
-    const contentDisposition = res.headers.get("content-disposition");
-    const fileName = contentDisposition
-      ? contentDisposition.split("filename=")[1].replace(/"/g, "")
-      : "downloaded_file";
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
+  window.open(`/api/files/download/${id}?token=${token}`, "_blank");
 }
 
-// Delete a file
 async function deleteFile(id) {
   if (!confirm("Delete this file?")) return;
   await fetch(`/api/files/${id}`, {
@@ -84,11 +51,9 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   await fetch("/api/files/upload", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
-    body: formData,
+    body: formData
   });
-
-  document.getElementById("fileInput").value = ""; // clear input
-  loadFiles(); // refresh list
+  loadFiles();
 });
 
 // Initial load

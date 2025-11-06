@@ -1,85 +1,51 @@
 import express from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 import File from "../models/File.js";
-import authMiddleware from "../middleware/authMiddleware.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
 
-// Create uploads folder if missing
-const uploadDir = "uploads";
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-// Multer setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-});
-const upload = multer({ storage });
-
-
-// 📁 Upload a file
-router.post("/upload", authMiddleware, upload.single("file"), async (req, res) => {
-  try {
-    const newFile = new File({
-      user: req.user.id,
-      originalName: req.file.originalname,
-      filename: req.file.filename
-    });
-    await newFile.save();
-    res.json({ message: "File uploaded successfully", file: newFile });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Upload failed" });
-  }
+// Upload file
+router.post("/upload", protect, upload.single("file"), async (req, res) => {
+  const file = new File({
+    filename: req.file.filename,
+    originalName: req.file.originalname,
+    size: req.file.size,
+    uploadedBy: req.user._id,
+  });
+  await file.save();
+  res.json({ message: "File uploaded successfully!" });
 });
 
-
-// 📄 Get all user files
-router.get("/", authMiddleware, async (req, res) => {
-  try {
-    const files = await File.find({ user: req.user.id }).sort({ createdAt: -1 });
-    res.json(files);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch files" });
-  }
+// Get all files (admin can view all, user sees only their own)
+router.get("/", protect, async (req, res) => {
+  const query = req.user.role === "admin" ? {} : { uploadedBy: req.user._id };
+  const files = await File.find(query).populate("uploadedBy", "username role");
+  res.json(files);
 });
 
-
-// ⬇️ Download a file
-router.get("/download/:id", authMiddleware, async (req, res) => {
-  try {
-    const file = await File.findById(req.params.id);
-    if (!file) return res.status(404).json({ message: "File not found" });
-    if (file.user.toString() !== req.user.id)
-      return res.status(403).json({ message: "Access denied" });
-
-    const filePath = path.resolve("uploads", file.filename);
-    res.download(filePath, file.originalName);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to download file" });
-  }
+// Download file
+router.get("/download/:id", protect, async (req, res) => {
+  const file = await File.findById(req.params.id);
+  if (!file) return res.status(404).json({ message: "File not found" });
+  res.download(path.resolve("uploads", file.filename), file.originalName);
 });
 
+// Delete file
+router.delete("/:id", protect, async (req, res) => {
+  const file = await File.findById(req.params.id);
+  if (!file) return res.status(404).json({ message: "File not found" });
 
-// 🗑️ Delete a file
-router.delete("/:id", authMiddleware, async (req, res) => {
-  try {
-    const file = await File.findById(req.params.id);
-    if (!file) return res.status(404).json({ message: "File not found" });
-    if (file.user.toString() !== req.user.id)
-      return res.status(403).json({ message: "Access denied" });
-
-    const filePath = path.resolve("uploads", file.filename);
-    fs.unlinkSync(filePath);
-    await file.deleteOne();
-    res.json({ message: "File deleted successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to delete file" });
+  if (req.user.role !== "admin" && file.uploadedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "You cannot delete this file" });
   }
+
+  fs.unlinkSync(path.resolve("uploads", file.filename));
+  await File.findByIdAndDelete(req.params.id);
+  res.json({ message: "File deleted successfully!" });
 });
 
 export default router;

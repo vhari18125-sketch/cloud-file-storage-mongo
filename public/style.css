@@ -1,205 +1,76 @@
-/* General Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
-}
-
-/* Background Gradient */
 body {
-  background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
-  color: #222;
-  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: #fff;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  height: 100vh;
+  margin: 0;
 }
 
-/* Container */
 .container {
-  background: white;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 40px;
   border-radius: 15px;
-  padding: 2rem;
-  margin-top: 3rem;
-  width: 90%;
-  max-width: 600px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  animation: fadeIn 1s ease-in-out;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  width: 350px;
+  backdrop-filter: blur(10px);
 }
 
-/* Header */
-header {
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+}
+
+input {
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
+}
+
+button {
+  background: #00c6ff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #0072ff;
+  transform: scale(1.05);
+}
+
+a {
+  color: #fff;
+  text-decoration: none;
+  display: block;
+  margin-top: 10px;
+  opacity: 0.8;
+}
+a:hover {
+  opacity: 1;
+}
+
+.file-item {
+  background: rgba(255, 255, 255, 0.2);
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
 }
 
-h1 {
-  color: #4f46e5;
-  font-size: 1.8rem;
-  font-weight: 600;
+.file-item button {
+  margin-left: 10px;
+  background: #ff7675;
 }
-
-#logoutBtn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-#logoutBtn:hover {
-  background: #dc2626;
-}
-
-/* Upload Section */
-.upload-section {
-  text-align: center;
-  margin: 1rem 0;
-}
-
-.file-label {
-  display: block;
-  color: #2563eb;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-#fileInput {
-  margin-bottom: 1rem;
-}
-
-.btn-upload {
-  background: #34d399;
-  border: none;
-  color: white;
-  padding: 0.6rem 1.2rem;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.btn-upload:hover {
-  background: #059669;
-}
-
-/* Search */
-.search-section {
-  margin: 1rem 0;
-}
-
-#searchInput {
-  width: 100%;
-  padding: 0.7rem;
-  border-radius: 8px;
-  border: 2px solid #93c5fd;
-  outline: none;
-  font-size: 1rem;
-  transition: 0.3s;
-}
-
-#searchInput:focus {
-  border-color: #2563eb;
-}
-
-/* Storage */
-.storage-section {
-  margin: 1.5rem 0;
-}
-
-.progress {
-  width: 100%;
-  background: #e5e7eb;
-  border-radius: 10px;
-  height: 10px;
-  margin-top: 0.5rem;
-  overflow: hidden;
-}
-
-#storageBar {
-  height: 10px;
-  width: 0%;
-  background: linear-gradient(90deg, #34d399, #3b82f6);
-  border-radius: 10px;
-  transition: width 0.5s ease;
-}
-
-/* File List */
-.files-section {
-  margin-top: 1rem;
-}
-
-.file-list {
-  border: 1px solid #ddd;
-  padding: 1rem;
-  border-radius: 10px;
-  background: #f3f4f6;
-  min-height: 100px;
-}
-
-/* Activity */
-.activity-section {
-  margin-top: 1rem;
-}
-
-#activityList {
-  list-style-type: none;
-  padding: 0;
-}
-
-#activityList li {
-  background: #e0f2fe;
-  margin: 0.5rem 0;
-  padding: 0.5rem;
-  border-radius: 8px;
-  color: #1e3a8a;
-  font-size: 0.95rem;
-}
-
-/* Footer */
-footer {
-  margin-top: 1.5rem;
-  text-align: center;
-  color: white;
-  font-size: 0.9rem;
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-/* Storage */
-.storage-section {
-  margin: 1.5rem 0;
-}
-
-.progress {
-  width: 100%;
-  background: #f3f4f6;
-  border-radius: 12px;
-  height: 18px; /* increased thickness */
-  margin-top: 0.6rem;
-  overflow: hidden;
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-}
-
-#storageBar {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #10b981, #3b82f6, #6366f1);
-  border-radius: 12px;
-  transition: width 0.5s ease;
-  animation: shine 3s infinite linear;
-}
-
-/* Animated glow effect */
-@keyframes shine {
-  0% { filter: brightness(1); }
-  50% { filter: brightness(1.4); }
-  100% { filter: brightness(1); }
+.file-item button.download {
+  background: #55efc4;
 }

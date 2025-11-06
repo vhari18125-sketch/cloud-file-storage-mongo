@@ -10,7 +10,7 @@ router.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Check existing user
+    // Check if user already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -34,19 +34,24 @@ router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    // Find user
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
 
+    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
     res.json({ token });
   } catch (err) {
@@ -54,4 +59,4 @@ router.post("/login", async (req, res) => {
   }
 });
 
-export default router
+export default router;
