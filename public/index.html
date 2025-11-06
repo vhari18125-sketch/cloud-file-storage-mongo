@@ -10,12 +10,18 @@
     <h2>📁 My Cloud Files</h2>
     <button id="logoutBtn">Logout</button>
 
+    <input type="text" id="searchInput" placeholder="🔍 Search files..." />
+
     <form id="uploadForm">
       <input type="file" id="fileInput" required />
       <button type="submit">Upload</button>
     </form>
 
-    <div id="fileList"></div>
+    <div id="storageUsage"></div>
+    <div id="fileList" class="file-list"></div>
+
+    <h3>📜 Recent Activity</h3>
+    <ul id="activityList"></ul>
   </div>
 
   <script src="script.js"></script>
