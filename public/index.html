@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>My Cloud Storage</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Cloud Files</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <h2>📁 My Cloud Files</h2>
+
+    <!-- Logout -->
     <button id="logoutBtn">Logout</button>
 
+    <!-- Upload -->
     <form id="uploadForm">
-      <input type="file" id="fileInput" required />
+      <input type="file" id="fileInput" />
       <button type="submit">Upload</button>
     </form>
 
+    <!-- Files list -->
     <div id="fileList"></div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js" type="module"></script>
 </body>
 </html>

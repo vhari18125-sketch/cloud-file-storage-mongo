@@ -1,10 +1,27 @@
 import mongoose from "mongoose";
 
 const fileSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  originalName: { type: String, required: true },
-  path: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
+  filename: {
+    type: String,
+    required: true,
+  },
+  originalName: {
+    type: String,
+    required: true,
+  },
+  mimetype: {
+    type: String,
+  },
+  size: {
+    type: Number,
+  },
+  uploadedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+}, { timestamps: true });
 
-export default mongoose.model("File", fileSchema);
+const File = mongoose.model("File", fileSchema);
+
+export default File;
